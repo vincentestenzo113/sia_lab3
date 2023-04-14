@@ -2,35 +2,64 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Traits\ApiResponser;
+use DB;
+
 Class UserController extends Controller {
-private $request;
-public function __construct(Request $request){
-$this->request = $request;
+    use ApiResponser;
+    private $request;
+    public function __construct(Request $request){
+    $this->request = $request;
 }
-    public function GetUsers(){
+public function getUsers(){
+    $users = DB::connection('mysql')
+    ->select("Select * from tbluser");
+    // return response()->json($users, 200);
+    return $this->successResponse($users);
+}
+// GET
+    public function index(){
         $users = User::all();
-        return response()->json($users, 200);
+        
+        // return response()->json($users, 200);
+        return $this->successResponse($users);
     }
-    public function show($id)
+// GET (ID)
+    public function showUsers($id)
     {
-        //
-        return User::where('id','like','%'.$id.'%')->get();
+        $users = User::findOrFail($id);
+        return $this->successResponse($users);
+    
+    // old code
+    /*
+    $user = User::where('userid', $id)->first();
+    if($user){
+    return $this->successResponse($user);
     }
-    public function add(Request $request ){
+    {
+    return $this->errorResponse('User ID Does Not Exists',
+    Response::HTTP_NOT_FOUND);
+    }
+    */
+}
+// ADD 
+    public function addUsers(Request $request ){
         $rules = [
-        'customer_first_name' => 'required|max:20',
-        'customer_last_name' => 'required|max:20',
+            'customer_first_name' => 'required|max:20',
+            'customer_last_name' => 'required|max:20',
+            'customer_phone_number' => 'required|max:20',
         ];
         $this->validate($request,$rules);
-        $user = User::create($request->all());
-        return $user;
-       
+        $users = User::create($request->all());
+        return $this->successResponse($users);
+// UPDATE
 }
-    public function update(Request $request,$id)
+    public function updateUsers(Request $request,$id)
     {
     $rules = [
-    'customer_first_name' => 'max:20',
-    'customer_last_name' => 'max:20',
+        'customer_first_name' => 'required|max:20',
+        'customer_last_name' => 'required|max:20',
+        'customer_phone_number' => 'required|max:20',
     ];
     $this->validate($request, $rules);
     $user = User::findOrFail($id);
@@ -43,8 +72,10 @@ $this->request = $request;
     }
     $user->save();
     return $user;
+
+// DELETE
 }
-    public function delete($id)
+    public function deleteUsers($id)
     {
     $user = User::findOrFail($id);
     $user->delete();
